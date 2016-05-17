@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>点线面绘制</title>
+    <style type="text/css">
+        body{
+            margin: 0;
+            overflow: hidden;
+            background: #fff;
+        }
+        #map{
+            position: relative;
+            height: 510px;
+            border:1px solid #3473b7;
+        }
+        #toolbar {
+        position: relative;
+        padding-top: 5px;
+        padding-bottom: 10px;
+    }
+    </style>
+    <link href='./css/bootstrap.min.css' rel='stylesheet' />
+    <link href='./css/bootstrap-responsive.min.css' rel='stylesheet' />
+    <script src = 'D:\supermap_iserver_8.0.1_win64\iClient\forJavaScript\libs/SuperMap.Include.js'></script>
+    <script type="text/javascript">
+        var map,layer,drawPoint, drawLine,drawPolygon,pointLayer,lineLayer,polygonLayer,
+                host = document.location.toString().match(/file:\/\//) ? "http://localhost:8081" : 'http://' + document.location.host;
+        url = host + "/iserver/services/map-world/rest/maps/World";
+        function init()
+        {
+            //新建点矢量图层
+            pointLayer = new SuperMap.Layer.Vector("pointLayer");
+
+            //新建线矢量图层
+            lineLayer = new SuperMap.Layer.Vector("lineLayer");
+            
+            //新建面矢量图层
+            drawPoint = new SuperMap.Control.DrawFeature(pointLayer, SuperMap.Handler.Point, { multi: true});
+            map = new SuperMap.Map("map",{controls:[
+                new SuperMap.Control.Zoom() ,
+                new SuperMap.Control.Navigation() ,
+                new SuperMap.Control.LayerSwitcher()
+            ,drawPoint,
+            ]});
+            layer= new SuperMap.Layer.TiledDynamicRESTLayer("World", url, null,{maxResolution:"auto"});
+            layer.events.on({"layerInitialized":addLayer});
+            drawPoint.activate();
+        }
+        function addLayer(){
+            //centerPointf()
+            map.addLayers([layer,pointLayer]);
+
+            //显示地图范围
+            map.setCenter(new SuperMap.LonLat(0, 0), 0);
+        }
+        function draw_point(){
+            drawPoint.activate();
+            deactiveAll();
+        function deactiveAll(){
+            
+            drawLine.deactivate();
+            drawPolygon.deactivate();
+
+        }
+        function clearFeatures(){
+            drawPoint.deactivate();
+            pointLayer.removeAllFeatures();
+        }
+/*        function centerPointf(){
+            var centerPoint=new SuperMap.Geometry.Point(0,-0);
+            var circleP=createCircle(centerPoint,30,256,360,360);
+            var circleVector= new SuperMap.Feature.Vector(circleP);
+            circleVector.style={
+            strokeColor:"#CAFF70",
+            fillColor:"#C6E2FF",
+            strokeWidth:2 ,
+            fillOpacity:0.5
+            };
+            vector.addFeatures([circleVector]);
+
+        }*/
+        function createCircle(origin, radius, sides,r,angel){
+            var rR = r*Math.PI/(180*sides);
+            var rotatedAngle, x, y;
+            var points = [];
+            for(var i=0; i<sides; ++i) {
+            rotatedAngle = rR*i;
+            x = origin.x + (radius * Math.cos(rotatedAngle));
+            y = origin.y + (radius * Math.sin(rotatedAngle));
+            points.push(new SuperMap.Geometry.Point(x, y));
+            }
+            rotatedAngle = r*Math.PI/180;
+            x = origin.x + (radius * Math.cos(rotatedAngle));
+            y = origin.y + (radius * Math.sin(rotatedAngle));
+            points.push(new SuperMap.Geometry.Point(x, y));
+
+            var ring = new SuperMap.Geometry.LinearRing(points);
+            ring.rotate(parseFloat(angel),origin);
+            var geo = new SuperMap.Geometry.Collection([ring]);
+            geo.origin = origin;
+            geo.radius = radius;
+            geo.r = r;
+            geo.angel = angel;
+            geo.sides = sides;
+            geo.polygonType = "Curve";
+            return geo;
+        }
+
+
+
+    </script>
+</head>
+<body onload="init()" >
+<div id="toolbar">
+    <input type="button" class="btn" value="绘点" onclick="draw_point()" />
+
+    <input type="button" class="btn" value="清除" onclick="clearFeatures()" />
+</div>
+<div id="map"></div>
+
+</body>
+</html>
