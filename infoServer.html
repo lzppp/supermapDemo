@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>点线面绘制</title>
+    <title>结合</title>
     <style type="text/css">
         body{
             margin: 0;
@@ -25,46 +24,33 @@
     <link href='./css/bootstrap-responsive.min.css' rel='stylesheet' />
     <script src = 'D:\supermap_iserver_8.0.1_win64\iClient\forJavaScript\libs/SuperMap.Include.js'></script>
     <script type="text/javascript">
-        var map,layer,drawPoint, drawLine,drawPolygon,pointLayer,lineLayer,polygonLayer,
+    var map,layer,drawPoint,pointLayer,//
                 host = document.location.toString().match(/file:\/\//) ? "http://localhost:8090" : 'http://' + document.location.host;
         url = host + "/iserver/services/map-world/rest/maps/World";
-        function init()
+         function init()
         {
             //新建点矢量图层
             pointLayer = new SuperMap.Layer.Vector("pointLayer");
-
-            //新建线矢量图层
-            lineLayer = new SuperMap.Layer.Vector("lineLayer");
-
-            //新建面矢量图层
-            polygonLayer = new SuperMap.Layer.Vector("polygonLayer");
-
-            //园
-            vector = new SuperMap.Layer.Vector("vector");
-            
-
+            circle = new SuperMap.Layer.Vector("circle");
             drawPoint = new SuperMap.Control.DrawFeature(pointLayer, SuperMap.Handler.Point, { multi: true});
-            drawPoint.events.on({ "featureadded": drawCompleted });
-            drawLine = new SuperMap.Control.DrawFeature(lineLayer, SuperMap.Handler.Path, { multi: true});
-            drawPolygon = new SuperMap.Control.DrawFeature(polygonLayer, SuperMap.Handler.Polygon);
+            drawPoint.events.on({ "featureadded": drawCompleted});
             MousePosition = new SuperMap.Control.MousePosition()
             map = new SuperMap.Map("map",{controls:[
                 new SuperMap.Control.Zoom() ,
                 new SuperMap.Control.Navigation() ,
                 new SuperMap.Control.LayerSwitcher()
                 //new SuperMap.Control.MousePosition()
-            ,drawPoint,drawLine,drawPolygon,
+            ,drawPoint,
             ]});
             layer= new SuperMap.Layer.TiledDynamicRESTLayer("World", url, null,{maxResolution:"auto"});
             //layer.events.on({"click":})
             layer.events.on({"layerInitialized":addLayer});
             map.addControl(MousePosition);
-
-
+            MousePosition.deactivate();
         }
         function addLayer(){
 
-            map.addLayers([layer,pointLayer,lineLayer,polygonLayer,vector]);
+            map.addLayers([layer,pointLayer,circle]);
             //显示地图范围
             map.setCenter(new SuperMap.LonLat(0, 0), 0);
         }
@@ -75,8 +61,11 @@
 
         }
         function drawCompleted(drawGeometryArgs) {
+            var feature =  new SuperMap.Feature.Vector();
+            feature.geometry = drawGeometryArgs.feature.geometry;
             var point = drawGeometryArgs.feature.geometry;
-            var centerPoint=point;
+            var centerPoint=feature.geometry.getVertices()
+            alert(centerPoint);
             var circleP=createCircle(centerPoint,30,256,360,360);
             var circleVector= new SuperMap.Feature.Vector(circleP);
             circleVector.style={
@@ -86,6 +75,7 @@
             fillOpacity:0.5
             };
             pointLayer.addFeatures([circleVector]);
+            alert("finish");
         }
         function createCircle(origin, radius, sides,r,angel){
             var rR = r*Math.PI/(180*sides);
@@ -113,31 +103,24 @@
             geo.polygonType = "Curve";
             return geo;
         }
-        function draw_line(){
-            deactiveAll();
-            drawLine.activate();
-        }
-
-        function draw_polygon(){
-            deactiveAll();
-            drawPolygon.activate();
+        function drawCompleted2(drawGeometryArgs) {
+            var feature =  new SuperMap.Feature.Vector();
+            feature.geometry = drawGeometryArgs.feature.geometry;
+            alert(feature.geometry.getVertices());
+            //a sql need here
         }
         function deactiveAll(){
             drawPoint.deactivate();
-            drawLine.deactivate();
-            drawPolygon.deactivate();
             MousePosition.deactivate();
 
         }
         function clearFeatures(){
             deactiveAll();
             pointLayer.removeAllFeatures();
-            lineLayer.removeAllFeatures();
-            polygonLayer.removeAllFeatures();
         }
 
 
-    </script>
+        </script>
 </head>
 <body onload="init()" >
 <div id="toolbar">
